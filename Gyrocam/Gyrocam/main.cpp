@@ -252,7 +252,7 @@ void processImageWithouthCalibration(std::string in, std::string out)
 	image = imread(in, 1);
 	vector<Scalar> colors = getColors();
 	Scalar black(0, 0, 0);
-	//drawFoundSegments(clusterizer.segments, image, black, 1);
+	drawFoundSegments(clusterizer.segments, image, black, 1);
 
 	vector<Point3d> vps;
 	for (int i = 0; i < 3; i++)
