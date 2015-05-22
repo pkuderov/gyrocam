@@ -44,15 +44,3 @@ Temporary Items
 
 # My ignores
 ~*
-*.opensdf
-*.sdf
-*.suo
-TestSamples/YorkUrbanDB/
-TestSamples/YorkUrbanDB.zip
-TestSamples/output.jpg
-TestSamples/output.jpg.txt
-Gyrocam/ipch/
-Gyrocam/Debug/
-Gyrocam/Release/
-Gyrocam/Gyrocam/Debug/
-Gyrocam/Gyrocam/Release/
