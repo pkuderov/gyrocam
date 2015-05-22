@@ -43,11 +43,16 @@ Temporary Items
 .apdisk
 
 # My ignores
-~$*
+~*
+*.opensdf
+*.sdf
+*.suo
 TestSamples/YorkUrbanDB/
 TestSamples/YorkUrbanDB.zip
-Gyrocam/ipch
-Gyrocam/Debug
-Gyrocam/Release
-Gyrocam/Gyrocam/Debug
-Gyrocam/Gyrocam/Release
+TestSamples/output.jpg
+TestSamples/output.jpg.txt
+Gyrocam/ipch/
+Gyrocam/Debug/
+Gyrocam/Release/
+Gyrocam/Gyrocam/Debug/
+Gyrocam/Gyrocam/Release/
