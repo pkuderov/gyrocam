@@ -10,7 +10,7 @@ namespace gyrocam
 		std::cout << "[(" << s[0] << ", " << s[1] << "), (" << s[2] << ", " << s[3] << ")]";
 	}
 
-	void testOut(Point3f p)
+	void testOut(Point3d p)
 	{
 		std::cout << p;
 	}

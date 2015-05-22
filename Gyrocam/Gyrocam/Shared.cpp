@@ -4,25 +4,25 @@
 
 namespace gyrocam
 {
-	Point3f toProjective(Vec4i segment, bool first)
+	Point3d toProjective(Vec4i segment, bool first)
 	{
 		return first
 			? toProjective(segment[0], segment[1])
 			: toProjective(segment[2], segment[3]);
 	}
-	Point3f toProjective(float x, float y)
+	Point3d toProjective(double x, double y)
 	{
-		return Point3f(x, y, 1);
+		return Point3d(x, y, 1);
 	}
 	
-	double norm12(Point3f p)
+	double norm12(Point3d p)
 	{
 		return sqrt(p.x*p.x + p.y*p.y);
 	}
 	
-	bool isIncident(Point3f vp, LineSegment segment)
+	bool isIncident(Point3d vp, LineSegment segment)
 	{
-		Point3f l = lineThroughPoints(segment.middle, vp);
+		Point3d l = lineThroughPoints(segment.middle, vp);
 		double d = incidence(l, segment.from) / norm12(l);
 		return abs(d) <= distanceEpsilon 
 			&& abs(asin(d / norm(segment.middle - segment.from))) <= angleEpsilon;
@@ -30,9 +30,8 @@ namespace gyrocam
 
 	void setRow(Mat a, int i, Mat col)
 	{
-		a.at<float>(i, 0) = col.at<float>(0, 0);
-		a.at<float>(i, 1) = col.at<float>(1, 0);
-		a.at<float>(i, 2) = col.at<float>(2, 0);
+		for (int j = 0; j < col.rows; j++)
+			a.at<double>(i, j) = col.at<double>(j, 0);
 	}
 
 	

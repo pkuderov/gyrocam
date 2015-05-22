@@ -14,14 +14,14 @@ namespace gyrocam
 	class RansacClusterizer
 	{
 		bool isNotEnoughIterations(int c, int n, int iteration);
-		Point3f nextPossibleVanishingPoint(int n);
+		Point3d nextPossibleVanishingPoint(int n);
 
 	public:
 		vector<LineSegment> segments;
 		set<int> notUsed;
 
 		RansacClusterizer(vector<LineSegment> segments);
-		vector<LineSegment> nextCluster(Point3f &outVanishingPoint);
+		vector<LineSegment> nextCluster(Point3d &outVanishingPoint);
 		~RansacClusterizer(void);
 	};
 

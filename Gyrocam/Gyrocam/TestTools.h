@@ -6,6 +6,6 @@ using namespace cv;
 namespace gyrocam
 {
 	void testOut(Vec4i s);
-	void testOut(Point3f p);
+	void testOut(Point3d p);
 }
 

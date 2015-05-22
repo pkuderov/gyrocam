@@ -46,9 +46,9 @@ vector<LineSegment> toProjectives(vector<Vec4i> lineSegments)
 }
 
 
-Mat getRotationMatrixBasedOnVanishingPoints(vector<Point3f> vps)
+Mat getRotationMatrixBasedOnVanishingPoints(vector<Point3d> vps)
 {
-	Mat A = Mat::eye(3, 3, CV_32FC1);
+	Mat A = Mat::eye(3, 3, CV_64FC1);
 	for (int i = 0; i < vps.size(); i++)
 		setRow(A, i, Mat(vps[i] / norm(vps[i])));
 
@@ -108,23 +108,23 @@ Mat readCalibrationMatrix(std::string calibrationMatrixPath)
 	infile >> temp >> ppHor >> ppVer;
 	infile.close();
 
-	Mat calibrationMatrix = Mat::eye(3, 3, CV_32FC1);
-	calibrationMatrix.at<float>(0, 0) = focalLength / pixelSize;
-	calibrationMatrix.at<float>(1, 1) = focalLength / pixelSize;
-	calibrationMatrix.at<float>(0, 2) = ppHor - 320;
-	calibrationMatrix.at<float>(1, 2) = ppVer - 240;
+	Mat calibrationMatrix = Mat::eye(3, 3, CV_64FC1);
+	calibrationMatrix.at<double>(0, 0) = focalLength / pixelSize;
+	calibrationMatrix.at<double>(1, 1) = focalLength / pixelSize;
+	calibrationMatrix.at<double>(0, 2) = ppHor - 320;
+	calibrationMatrix.at<double>(1, 2) = ppVer - 240;
 
 	return calibrationMatrix;
 }
 
-Mat toNormalized(Point3f l, Mat invCalibrationMatrix)
+Mat toNormalized(Point3d l, Mat invCalibrationMatrix)
 {
-	Point3f t(l);
+	Point3d t(l);
 	normalizeZ(t);
 
 	Mat line(t);
 	line = invCalibrationMatrix * line;
-	line /= norm(Point3f(line));
+	line /= norm(line);
 	return line;
 }
 
@@ -133,27 +133,91 @@ Mat toNormalized(Mat line, Mat invCalibrationMatrix)
 	return invCalibrationMatrix * line;
 }
 
-Point3f fromNormalized(Mat line, Mat calibrationMatrix)
+Point3d fromNormalized(Mat line, Mat calibrationMatrix)
 {
 	Mat t = calibrationMatrix * line;
-	return Point3f(t);
+	return Point3d(t);
 }
 
-
-Point3f refineVanishingPoint(vector<LineSegment> segments, Mat inversedCalibrationMatrix)
+void solveZManually(Mat A, Mat &res)
 {
-	Mat A = Mat::zeros(segments.size(), 3, CV_32FC1);
+	SVD svd(A, SVD::FULL_UV);
+	cout << svd.w << endl;
+	cout << svd.vt << endl;
+	double normW = norm(svd.w);
+	for (int i = 0; i < svd.w.rows; i++)
+	{
+		double d = svd.w.at<double>(i, 0);
+		if (d < 0)
+			cout << "false";
+		if (d < normW * 1e-4)
+		{
+			res = svd.vt.row(i == 0 ? i : i - 1);
+			return;
+		}
+	}
+
+	res = svd.vt.row(svd.vt.cols - 1);
+}
+
+Point3d refineVanishingPoint(vector<LineSegment> segments, Mat inversedCalibrationMatrix)
+{
+	Mat A = Mat::zeros(segments.size(), 3, CV_64FC1);
 	for (int i = 0; i < segments.size(); i++)
 	{
 		setRow(A, i, toNormalized(segments[i].line, inversedCalibrationMatrix));
 	}
 
-	Mat res;
-	SVD::solveZ(A, res);
-	return Point3f(res);
+	Mat res = Mat::zeros(3, 1, CV_64FC1);
+	solveZManually(A, res);
+	std::cout << res << endl;
+
+	Mat res1 = Mat::zeros(3, 1, CV_64FC1);
+	SVD::solveZ(A, res1);
+	std::cout << res1 << endl;
+	cout << endl;
+	return Point3d(res);
 }
 
-vector<LineSegment> getSegmentsIncidentWithVanishingPoint(Point3f vp, vector<LineSegment> segments)
+Point3d refineVanishingPoint1(vector<LineSegment> segments, Mat cM, Mat inversedCalibrationMatrix)
+{
+	Mat cmr = Mat::zeros(3, 4, CV_64FC1);
+	cM.copyTo(cmr(Rect(0, 0, 3, 3)));
+	std::cout << cmr << endl;
+	Mat icmr = Mat::zeros(4, 3, CV_64FC1);
+	inversedCalibrationMatrix.copyTo(icmr(Rect(0, 0, 3, 3)));
+	std::cout << icmr << endl;
+
+	Mat icmr2 = cmr.inv(DECOMP_SVD);
+	std::cout << icmr2 << endl;
+
+	Mat A = Mat::zeros(segments.size(), 4, CV_64FC1);
+	for (int i = 0; i < segments.size(); i++)
+	{
+		Point3d t(segments[i].line);
+		normalizeZ(t);
+
+		Mat line(t);
+		line = icmr * line;
+		line /= norm(line);
+
+		Mat l = line(Rect(0, 0, 1, 3));
+		Point3d p(l);
+		Point3d q(toNormalized(segments[i].line, inversedCalibrationMatrix));
+
+		setRow(A, i, line);
+	}
+
+	Mat res = Mat::zeros(A.cols, 1, CV_64FC1);
+	SVD::solveZ(A, res);
+	std::cout << res << endl;
+	if (abs(res.at<double>(3, 0)) > 1e-12 * norm(res))
+		res /= res.at<double>(3, 0);
+	Mat vres = res(Rect(0, 0, 1, 3));
+	return Point3d(vres);
+}
+
+vector<LineSegment> getSegmentsIncidentWithVanishingPoint(Point3d vp, vector<LineSegment> segments)
 {
 	vector<LineSegment> res;
 	for (int i = 0; i < segments.size(); i++)
@@ -165,19 +229,19 @@ vector<LineSegment> getSegmentsIncidentWithVanishingPoint(Point3f vp, vector<Lin
 	return res;
 }
 
-Point3f refineVanishingPointWithoutUncalibration(vector<LineSegment> segments)
+Point3d refineVanishingPointWithoutUncalibration(vector<LineSegment> segments)
 {
-	Mat A = Mat::zeros(segments.size(), 3, CV_32FC1);
+	Mat A = Mat::zeros(segments.size(), 3, CV_64FC1);
 	for (int i = 0; i < segments.size(); i++)
 	{
-		Point3f originLine(segments[i].line);
+		Point3d originLine(segments[i].line);
 		originLine /= norm(originLine);
 		setRow(A, i, Mat(originLine));
 	}
 
 	Mat res;
 	SVD::solveZ(A, res);
-	return Point3f(res);
+	return Point3d(res);
 }
 
 void processImageWithouthCalibration(std::string in, std::string out)
@@ -190,17 +254,17 @@ void processImageWithouthCalibration(std::string in, std::string out)
 	Scalar black(0, 0, 0);
 	//drawFoundSegments(clusterizer.segments, image, black, 1);
 
-	vector<Point3f> vps;
+	vector<Point3d> vps;
 	for (int i = 0; i < 3; i++)
 	{
 		if (clusterizer.notUsed.size() == 0)
 			break;
 
-		Point3f originVp;
+		Point3d originVp;
 		vector<LineSegment> found = clusterizer.nextCluster(originVp);
 		drawFoundSegments(found, image, colors[i] / 2);
 
-		Point3f refinedVp = refineVanishingPointWithoutUncalibration(found);
+		Point3d refinedVp = refineVanishingPointWithoutUncalibration(found);
 		drawFoundSegments(getSegmentsIncidentWithVanishingPoint(refinedVp, clusterizer.segments), image, colors[i]);
 		vps.push_back(refinedVp);
 	}
@@ -229,18 +293,18 @@ void processImage(std::string in, std::string out, Mat calibrationMatrix, Mat in
 	image = imread(in, 1);
 	vector<Scalar> colors = getColors();
 
-	vector<Point3f> vps;
+	vector<Point3d> vps;
 	for (int i = 0; i < 3; i++)
 	{
 		if (clusterizer.notUsed.size() == 0)
 			break;
 
-		Point3f originVp;
+		Point3d originVp;
 		vector<LineSegment> found = clusterizer.nextCluster(originVp);
 		drawFoundSegments(found, image, colors[i] / 2);
 
-		Point3f refinedVp = refineVanishingPoint(found, inversedCalibrationMatrix);
-		Point3f p = fromNormalized(Mat(refinedVp), calibrationMatrix);
+		Point3d refinedVp = refineVanishingPoint(found, inversedCalibrationMatrix);
+		Point3d p = fromNormalized(Mat(refinedVp), calibrationMatrix);
 		normalizeZ(p);
 		drawFoundSegments(getSegmentsIncidentWithVanishingPoint(p, clusterizer.segments), image, colors[i]);
 		vps.push_back(refinedVp);
@@ -285,7 +349,7 @@ int main(int argc, char** argv)
 	Mat calibrationMatrix = readCalibrationMatrix(calibrationMatrixPath);
 	Mat inversedCalibrationMatrix = calibrationMatrix.inv();
 
-	processImageWithouthCalibration(in, out);
+	processImageWithouthCalibration(in, out);	
 	//processImage(in, out, calibrationMatrix, inversedCalibrationMatrix);
 
 	waitKey();

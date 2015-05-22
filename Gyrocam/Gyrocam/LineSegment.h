@@ -11,7 +11,7 @@ namespace gyrocam
 	
 	public:
 		Vec4i origin;
-		Point3f from, to, middle, line;
+		Point3d from, to, middle, line;
 
 		LineSegment(Vec4i lineSegment);
 		~LineSegment(void);

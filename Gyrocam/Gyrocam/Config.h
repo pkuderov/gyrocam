@@ -8,5 +8,5 @@ namespace gyrocam
 	static const double angleEpsilon = 0.04;
 
 	static const double pi = 3.14159265358979323846;
-	const double infinitePointEpsilon = 1e-6;
+	const double infinitePointEpsilon = 1e-12;
 }

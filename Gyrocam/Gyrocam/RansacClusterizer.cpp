@@ -14,16 +14,16 @@ namespace gyrocam
 			notUsed.insert(i);
 	}
 
-	vector<LineSegment> RansacClusterizer::nextCluster(Point3f &outVanishingPoint)
+	vector<LineSegment> RansacClusterizer::nextCluster(Point3d &outVanishingPoint)
 	{
 		int n = notUsed.size();
 		int bestCount = 0;
-		Point3f bestVanishingPoint;
+		Point3d bestVanishingPoint;
 		int iteration = 0;
 
 		while(isNotEnoughIterations(bestCount, n, iteration))
 		{
-			Point3f vp = nextPossibleVanishingPoint(n);
+			Point3d vp = nextPossibleVanishingPoint(n);
 			normalizeZ(vp);
 
 			int count = 0;
@@ -63,7 +63,7 @@ namespace gyrocam
 		return found;
 	}
 
-	Point3f RansacClusterizer::nextPossibleVanishingPoint(int n)
+	Point3d RansacClusterizer::nextPossibleVanishingPoint(int n)
 	{
 		set<int>::iterator it = notUsed.begin();
 
