@@ -43,8 +43,10 @@ Temporary Items
 .apdisk
 
 # My ignores
+~$*
 TestSamples/YorkUrbanDB/
 TestSamples/YorkUrbanDB.zip
+Gyrocam/ipch
 Gyrocam/Debug
 Gyrocam/Release
 Gyrocam/Gyrocam/Debug

@@ -87,12 +87,12 @@ vector<Scalar> getColors()
 	return colors;
 }
 
-void drawFoundSegments(vector<LineSegment> segments, Mat image, Scalar color)
+void drawFoundSegments(vector<LineSegment> segments, Mat image, Scalar color, int thickness = 2)
 {
 	for (int i = 0; i < segments.size(); i++)
 	{
 		Vec4i origin = segments[i].origin;
-		line(image, Point(origin[0], origin[1]), Point(origin[2], origin[3]), color, 2);
+		line(image, Point(origin[0], origin[1]), Point(origin[2], origin[3]), color, thickness);
 	}
 }
 
@@ -106,6 +106,7 @@ Mat readCalibrationMatrix(std::string calibrationMatrixPath)
 	infile >> temp >> focalLength;
 	infile >> temp >> pixelSize;
 	infile >> temp >> ppHor >> ppVer;
+	infile.close();
 
 	Mat calibrationMatrix = Mat::eye(3, 3, CV_32FC1);
 	calibrationMatrix.at<float>(0, 0) = focalLength / pixelSize;
@@ -179,13 +180,15 @@ Point3f refineVanishingPointWithoutUncalibration(vector<LineSegment> segments)
 	return Point3f(res);
 }
 
-void processImageWithouthCalibration(std::string path)
+void processImageWithouthCalibration(std::string in, std::string out)
 {
-    Mat image = imread(path, 0);
+    Mat image = imread(in, 0);
 	RansacClusterizer clusterizer = initRansacClusterizer(image);
 
-	image = imread(path, 1);
+	image = imread(in, 1);
 	vector<Scalar> colors = getColors();
+	Scalar black(0, 0, 0);
+	//drawFoundSegments(clusterizer.segments, image, black, 1);
 
 	vector<Point3f> vps;
 	for (int i = 0; i < 3; i++)
@@ -202,8 +205,15 @@ void processImageWithouthCalibration(std::string path)
 		vps.push_back(refinedVp);
 	}
 
+	imwrite(out, image);
+
 	Mat vpBasis = getRotationMatrixBasedOnVanishingPoints(vps);
 	Mat orthoVpBasis = orthogonalizeBasis(vpBasis);
+	
+	std::ofstream outfile(out + ".txt");
+	outfile << vpBasis << endl << orthoVpBasis << endl;
+	outfile.flush();
+	outfile.close();
 
 	std::cout << vpBasis << endl;
 	std::cout << orthoVpBasis << endl;
@@ -211,12 +221,12 @@ void processImageWithouthCalibration(std::string path)
 	imshow("result", image);
 }
 
-void processImage(std::string path, Mat calibrationMatrix, Mat inversedCalibrationMatrix)
+void processImage(std::string in, std::string out, Mat calibrationMatrix, Mat inversedCalibrationMatrix)
 {
-    Mat image = imread(path, 0);
+    Mat image = imread(in, 0);
 	RansacClusterizer clusterizer = initRansacClusterizer(image);
 
-	image = imread(path, 1);
+	image = imread(in, 1);
 	vector<Scalar> colors = getColors();
 
 	vector<Point3f> vps;
@@ -236,8 +246,15 @@ void processImage(std::string path, Mat calibrationMatrix, Mat inversedCalibrati
 		vps.push_back(refinedVp);
 	}
 
+	imwrite(out, image);
+
 	Mat vpBasis = getRotationMatrixBasedOnVanishingPoints(vps);
 	Mat orthoVpBasis = orthogonalizeBasis(vpBasis);
+
+	std::ofstream outfile(out + ".txt");
+	outfile << vpBasis << endl << orthoVpBasis << endl;
+	outfile.flush();
+	outfile.close();
 
 	std::cout << vpBasis << endl;
 	std::cout << orthoVpBasis << endl;
@@ -248,22 +265,28 @@ void processImage(std::string path, Mat calibrationMatrix, Mat inversedCalibrati
 
 int main(int argc, char** argv)
 {
-    std::string in;
-    if (argc != 2)
-    {
-        in = """p:/Projects/Study/Graduate work/Gyrocam/TestSamples/urban3.jpg""";
-    }
-    else
+    std::string in = "../../TestSamples/urban3.jpg";
+	std::string out = "../../TestSamples/output.jpg";
+	std::string calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
+    if (argc >= 2)
     {
         in = argv[1];
     }
+	if (argc >= 3)
+	{
+		out = argv[2];
+	}
+	if (argc >= 4)
+	{
+		calibrationMatrixPath = argv[3];
+	}
 
-	std::string calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
+	
 	Mat calibrationMatrix = readCalibrationMatrix(calibrationMatrixPath);
 	Mat inversedCalibrationMatrix = calibrationMatrix.inv();
 
-	processImageWithouthCalibration(in);
-	//processImage(in, calibrationMatrix, inversedCalibrationMatrix);
+	processImageWithouthCalibration(in, out);
+	//processImage(in, out, calibrationMatrix, inversedCalibrationMatrix);
 
 	waitKey();
 

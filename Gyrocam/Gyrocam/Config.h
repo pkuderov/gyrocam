@@ -2,7 +2,7 @@
 
 namespace gyrocam
 {
-	static const double minAllowedLineSegmentLength = 30;
+	static const double minAllowedLineSegmentLength = 20;
 
 	static const double distanceEpsilon = 2;
 	static const double angleEpsilon = 0.04;
