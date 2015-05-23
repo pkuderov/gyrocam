@@ -1,3 +1,37 @@
+Вопросы:
+ * "Manhattan World" - переводить, нет?
+ * стоит ли рядом с понятиями, методами, названиями чего-либо важного приводить в скобочках оригинальное и/или популярное название на ин.яз.?
+Ответы:
+---------------------------------------------------
+
+Активно развивается область, связанная с созданием автономных роботов, транспортных средств. Область широкая и давно вышла за рамки военных нужд - высок интерес со стороны промышленности и населения (нужно про это вообще писать?). бла-бла-бла
+Собственное движение автотехники полагается на системы позиционирования. 
+Распространенные способы построения подобных систем: 
+ * гироскопы на основе инерциальных датчиков. Проблема –  накопление ошибки со временем.
+ * системы глобального (спутникового) наведения – низкая точность в местах густой застройки, под кронами деревьев, под мостами (так ли это? да!), низкая точность в принципе при условии использования недорогих приемников и/или при небольших размерах (относительно максимально возможной точности) самого объекта.
+
+Набирает популярность использование методов компьютерного зрения. Видеодатчики имеют маленький размер, энергопотребление, цену => есть интерес использовать их в системах позиционирования и навигации. Камеры потребительского класса легко доступны, для тестирования методов можно использовать их, в том числе камеры мобильных телефонов. Датчики на основе анализа изображений не имеют проблемы ИНС - накопления ошибки, при этом может достигаться довольно хорошая точность, сравнимая с датчиками гироскопов потребительского класса.
+Популярные решения:
+ * SLAM(simultaneous localization and mapping, метод одновременной навигации и составления карты / картирования) - используют Particle filters / Sequential Monte Carlo(SMC) или расширенный фильтр Калмана
+ * SfM (Structure from motion) - видимо, то же, что и 3D reconstruction from 2D images.
+Оба решения похожи тем, что они пытаются построить 3D модель окружающей среды, относительно которой происходит движение камеры.
+
+Другой вариант – построение гироскопа на основе определения трехмерной ориентации по изображению без воссоздания модели окружающей среды. Данный метод основан на отслеживании ТСП по обнаруженным на изображении СЛ в условиях "Manhattan World".
+/* вот тут стоит кратко в 2-3 предложения описать, что такое "Manhattan World" и далее стараться его не касаться:
+ * wiki http://en.wikipedia.org/wiki/User:Paulpop
+ * probably original of such concept  http://papers.nips.cc/paper/1804-the-manhattan-world-assumption-regularities-in-scene-statistics-which-enable-bayesian-inference.pdf
+*/
+Плюсы конкретно данного метода:
+ * в условиях "Manhattan World" изобилие линейных объектов правильной геометрической формы позволяет достигнуть высокой точности
+ * число интересующих нас ТСП ограничено <= 3
+ * ТСП не зависят от положения камеры - только от ее ориентации
+ * робастность относительно случайных нестационарных объектов, попадающих в кадр (люди, транспортные средства и т.п.)
+
+Методы на основе определения ТСП используются для:
+ * навигации автономных транспортных средств, роботов
+ * 3D реконструкции окружающей среды в условиях "Manhattan World"
+ * калибровка камер и коррекция изображений
+
 
 Метод коротко:
  * выделение сегментов линий на изображении
@@ -7,5 +41,17 @@
  * ортогонализация матрицы, составленной из векторов направлений ТСП
  * (нет) получение углов (крен, тангаж, рыскание) из матрицы поворота
  * (нет) связывание матриц поворота и кормление их расширенному фильтру Калмана (omgwtf)
+
+Теория:
+1. Геометрия ТСП
+1.1. Проективное преобразование и однородные координаты, модель булавочного отверстия
  
- 
+
+
+Расширенный фильтр Калмана (http://en.wikipedia.org/wiki/Extended_Kalman_filter): 
+In estimation theory, the extended Kalman filter (EKF) is the nonlinear version of the Kalman filter which linearizes about an estimate of the current mean and covariance. In the case of well defined transition models, the EKF has been considered[1] the de facto standard in the theory of nonlinear state estimation, navigation systems and GPS
+Disadvantages of the extended Kalman filter
+Unlike its linear counterpart, the extended Kalman filter in general is not an optimal estimator (of course it is optimal if the measurement and the state transition model are both linear, as in that case the extended Kalman filter is identical to the regular one). In addition, if the initial estimate of the state is wrong, or if the process is modeled incorrectly, the filter may quickly diverge, owing to its linearization. Another problem with the extended Kalman filter is that the estimated covariance matrix tends to underestimate the true covariance matrix and therefore risks becoming inconsistent in the statistical sense without the addition of "stabilising noise".
+
+SfM:
+Structure from motion (SfM) is a range imaging technique; it refers to the process of estimating three-dimensional structures from two-dimensional image sequences which may be coupled with local motion signals. It is studied in the fields of computer vision and visual perception. In biological vision, SfM refers to the phenomenon by which humans (and other living creatures) can recover 3D structure from the projected 2D (retinal) motion field of a moving object or scene.
