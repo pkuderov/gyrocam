@@ -140,8 +140,8 @@ Point3d refineVanishingPoint(vector<LineSegment> segments, Mat inversedCalibrati
 		Mat res1 = Mat::zeros(3, 1, CV_64FC1);
 		SVD::solveZ(A, res1);
 
-		std::cout << "SolveZManually: " << res << endl;
-		std::cout << "SolveZ: " << res1 << endl;
+		std::cout << "SolveZManually: " << endl << res << endl;
+		std::cout << "SolveZ: " <<endl << res1 << endl;
 		cout << "SolveZ diff: " << norm(res - res1) << endl;
 	}
 
@@ -174,13 +174,18 @@ void eraseFromSet(set<int> &s, vector<int> toErase)
 	for (int i = 0; i < toErase.size(); i++)
 		s.erase(toErase[i]);
 }
-	
+
+string getBaseIdenificationPath(string path)
+{
+	int extInd = path.find_last_of('.');
+	return (extInd == string::npos || (extInd + 1 < path.length() && path[extInd + 1] == '/')) 
+		? path 
+		: path.substr(0, extInd);
+}
+
 void saveVanishingPointsDirections(string out, Mat vpBasis, Mat orthoVpBasis)
 {
-	int extInd = out.find_last_of('.');
-	string outBase = (extInd == string::npos || (extInd + 1 < out.length() && out[extInd + 1] == '/')) 
-		? out 
-		: out.substr(0, extInd);
+	string outBase = getBaseIdenificationPath(out);
 	
 	// non-orthogonal basis
 	std::ofstream outfile(outBase + "_gyrocam_vp_basis.txt");
@@ -406,9 +411,9 @@ void RunYorkUrbanDbTest(string dbDir, string reportFilePath, Mat calibrationMatr
 int main(int argc, char** argv)
 {
     std::string in = "../../TestSamples/urban3.jpg";
-	in = "../../TestSamples/YorkUrbanDB_indoor/";
+	//in = "../../TestSamples/YorkUrbanDB_indoor/";
 	std::string out = "../../TestSamples/output.jpg";
-	out = "../../TestSamples/YorkUrbanDB_indoor/report1.txt";
+	//out = "../../TestSamples/YorkUrbanDB_indoor/report1.txt";
 	std::string calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
 	// modes
 	bool waitMode = true;
@@ -416,6 +421,7 @@ int main(int argc, char** argv)
 	bool inPathIsSet = false;
 	bool outPathIsSet = false;
 	bool calibMatrixIsSet = false;
+	bool inBasedOutPath = true;
 	
 	for (int i = 1; i < argc; i++)
 	{
@@ -428,6 +434,8 @@ int main(int argc, char** argv)
 				waitMode = false;
 			else if (s == "-silent")
 				SILENT_MODE = true;
+			else if (s == "-trace")
+				TRACE_ENABLED = true;
 			else if (s == "-defaultyorkcalibmat")
 				calibMatrixIsSet = true;
 			else if (s == "-yorkurbandb")
@@ -442,6 +450,7 @@ int main(int argc, char** argv)
 		{
 			out = s;
 			outPathIsSet = true;
+			inBasedOutPath = false;
 		}
 		else
 		{
@@ -449,6 +458,8 @@ int main(int argc, char** argv)
 			calibMatrixIsSet = true;
 		}
 	}
+	if (inBasedOutPath)
+		out = getBaseIdenificationPath(in) + "_result.jpg";
 	
 	Mat calibrationMatrix = readCalibrationMatrix(calibMatrixIsSet, calibrationMatrixPath);
 	Mat inversedCalibrationMatrix = calibrationMatrix.inv();
