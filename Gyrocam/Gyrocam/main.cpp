@@ -335,6 +335,7 @@ void RunYorkUrbanDbTest(string dbDir, string reportFilePath, Mat calibrationMatr
 	}
 
 	int n = imageNames.size();
+	cout << "n: " << n << endl;
 	//n = 10;
 	if (n == 0)
 		return;
@@ -389,9 +390,13 @@ void RunYorkUrbanDbTest(string dbDir, string reportFilePath, Mat calibrationMatr
 	{
 		Mat t = vpError.row(i) - vpErrorMean;
 		for (int j = 0; j < 3; j++)
-			vpErrorStd.at<double>(0, j) += sqrt(norm(t.t() * t));
+		{
+			double tt = t.at<double>(0, j);
+			vpErrorStd.at<double>(0, j) += tt * tt;
+		}
 	}	
-	vpErrorStd /= n - 1;
+	for (int i = 0; i < 3; i++)
+		vpErrorStd.at<double>(0, i) = sqrt(vpErrorStd.at<double>(0, i))/(n - 1);
 
 	globalReport << "err std = " << vpErrorStd << endl;
 	globalReport.flush();
@@ -401,9 +406,9 @@ void RunYorkUrbanDbTest(string dbDir, string reportFilePath, Mat calibrationMatr
 int main(int argc, char** argv)
 {
     std::string in = "../../TestSamples/urban3.jpg";
-	in = "../../TestSamples/YorkUrbanDB/";
+	in = "../../TestSamples/YorkUrbanDB_indoor/";
 	std::string out = "../../TestSamples/output.jpg";
-	out = "../../TestSamples/YorkUrbanDB/report.txt";
+	out = "../../TestSamples/YorkUrbanDB_indoor/report1.txt";
 	std::string calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
 	// modes
 	bool waitMode = true;
@@ -423,9 +428,9 @@ int main(int argc, char** argv)
 				waitMode = false;
 			else if (s == "-silent")
 				SILENT_MODE = true;
-			else if (s == "-defaultYorkCalibMat")
+			else if (s == "-defaultyorkcalibmat")
 				calibMatrixIsSet = true;
-			else if (s == "-yorkUrbanDb")
+			else if (s == "-yorkurbandb")
 				YORK_URBAN_DB_TEST_MODE = true;
 		}
 		else if (!inPathIsSet)
@@ -445,11 +450,10 @@ int main(int argc, char** argv)
 		}
 	}
 	
-	calibMatrixIsSet = true;
 	Mat calibrationMatrix = readCalibrationMatrix(calibMatrixIsSet, calibrationMatrixPath);
 	Mat inversedCalibrationMatrix = calibrationMatrix.inv();
-	
-	//if (YORK_URBAN_DB_TEST_MODE)
+
+	if (YORK_URBAN_DB_TEST_MODE)
 	{
 		SILENT_MODE = true;
 		RunYorkUrbanDbTest(in, out, calibrationMatrix, inversedCalibrationMatrix);

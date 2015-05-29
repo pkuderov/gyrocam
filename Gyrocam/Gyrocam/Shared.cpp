@@ -78,6 +78,16 @@ namespace gyrocam
 
 	Mat getNearestOrthogonalMatrix(Mat a)
 	{
+		/*Mat t = a.col(0).cross(a.col(1)).t() * a.col(2);
+		double d = t.at<double>(0, 0);
+		if (abs(d) < 0.4 && d < 0);
+		if (abs(d) > 0.4)
+			return 1
+
+		for (int i = 0; i < 3; i++)
+			for (int j = i + 1; j< 3; j++)
+				if (acos(norm(a.col(j).t() * a.col(i))) > 0.4)
+*/
 		SVD svd(a, SVD::FULL_UV);
 		return svd.u * svd.vt;
 	}
