@@ -45,18 +45,18 @@ namespace gyrocam
 		if (bestCount == 0)
 			return found;
 	
-		for (set<int>::iterator it = notUsed.begin(); it != notUsed.end();)
+		for (set<int>::iterator it = notUsed.begin(); it != notUsed.end(); ++it)
 		{
 			if (isIncident(bestVanishingPoint, segments[*it]))
 			{
 				found.push_back(segments[*it]);
-				set<int>::iterator tmp = it;
+				/*set<int>::iterator tmp = it;
 				++tmp;
 				notUsed.erase(it);
-				it = tmp;
+				it = tmp;*/
 			}
-			else
-				++it;
+			/*else
+				++it;*/
 		}
 
 		outVanishingPoint = bestVanishingPoint;

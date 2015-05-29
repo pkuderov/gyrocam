@@ -51,7 +51,36 @@ namespace gyrocam
 
 		return *it;
 	}
+	
+	
+	Mat toNormalized(Mat line, Mat invCalibrationMatrix)
+	{
+		return invCalibrationMatrix * line;
+	}
 
+	Mat toNormalized(LineSegment s, Mat invCalibrationMatrix)
+	{
+		Mat from(s.from);
+		Mat to(s.to);
+		from = toNormalized(from, invCalibrationMatrix);
+		to = toNormalized(to, invCalibrationMatrix);
+
+		Mat line = to.cross(from);
+		line /= norm(line);
+		return line;
+	}
+
+	Point3d fromNormalized(Mat line, Mat calibrationMatrix)
+	{
+		Mat t = calibrationMatrix * line;
+		return Point3d(t);
+	}
+
+	Mat getNearestOrthogonalMatrix(Mat a)
+	{
+		SVD svd(a, SVD::FULL_UV);
+		return svd.u * svd.vt;
+	}
 
 	// ----------------- OBSOLETE --------------------------
 
