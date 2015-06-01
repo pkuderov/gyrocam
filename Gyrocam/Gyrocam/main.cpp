@@ -27,6 +27,7 @@ bool DRAW_UNREFINED = false;
 bool DRAW_REFINED = true;
 bool SILENT_MODE = false;
 bool YORK_URBAN_DB_TEST_MODE = false;
+bool POCKET_SIZE = false;
 
 bool IS_TRACE_ENABLED() { return TRACE_ENABLED && !SILENT_MODE; }
 bool SHOULD_DRAW_UNREFINED() { return DRAW_UNREFINED; }
@@ -55,6 +56,18 @@ vector<LineSegment> toProjectives(vector<Vec4i> lineSegments)
 	return _lineSegments;
 }
 
+Mat resizeImage(Mat image)
+{	
+	Mat resultImage;
+	double width = POCKET_SIZE ? 800 : 1200;
+	double height = POCKET_SIZE ? 600 : 1000;
+	double scaleFactor = min(width/image.cols, height / image.rows);
+	if (scaleFactor < 1.0)
+		resize(image, resultImage, Size(), scaleFactor, scaleFactor);
+	else
+		resultImage = image;
+	return resultImage;
+}
 
 Mat getRotationMatrixBasedOnVanishingPoints(vector<Point3d> vps)
 {
@@ -209,9 +222,11 @@ void saveVanishingPointsDirections(string out, Mat vpBasis, Mat orthoVpBasis)
 void processImage(std::string in, std::string out, Mat calibrationMatrix, Mat inversedCalibrationMatrix, Mat &vpBasis, Mat &vpOrthoBasis)
 {
     Mat image = imread(in, 0);
+	image = resizeImage(image);
 	RansacClusterizer clusterizer = initRansacClusterizer(image);
 
 	image = imread(in, 1);
+	image = resizeImage(image);
 	vector<Scalar> colors = getColors();
 	
 	if (SHOULD_DRAW_UNREFINED())
@@ -228,14 +243,13 @@ void processImage(std::string in, std::string out, Mat calibrationMatrix, Mat in
 
 		Point3d originVp;
 		vector<LineSegment> originCluster = clusterizer.nextCluster(originVp);
-		if (originCluster.size() < 3)
-			break;
-
 		if (SHOULD_DRAW_UNREFINED())
 		{
 			drawFoundSegments(originCluster, image, colors[i] / 2);
 			drawPointMarkerIfVisibleOnImage(originVp, image, colors[i] / 2);
 		}
+		if (originCluster.size() < 3)
+			continue;
 
 		Point3d refinedVpNormalized = refineVanishingPoint(originCluster, inversedCalibrationMatrix);
 		Point3d refinedVp = fromNormalized(Mat(refinedVpNormalized), calibrationMatrix);
@@ -265,13 +279,7 @@ void processImage(std::string in, std::string out, Mat calibrationMatrix, Mat in
 	{
 		imwrite(out, image);
 		
-		Mat showImage;
-		double scaleFactor = min(1000.0/image.cols, 700.0 / image.rows);
-		if (scaleFactor < 1.0)
-			resize(image, showImage, Size(), scaleFactor, scaleFactor);
-		else
-			showImage = image;
-
+		Mat showImage = resizeImage(image);
 		if (!SILENT_MODE)
 			imshow("result", showImage);
 	}
@@ -440,6 +448,10 @@ int main(int argc, char** argv)
 				calibMatrixIsSet = true;
 			else if (s == "-yorkurbandb")
 				YORK_URBAN_DB_TEST_MODE = true;
+			else if (s == "-pocketsize")
+				POCKET_SIZE = true;
+			else if (s == "-drawunrefined")
+				DRAW_UNREFINED = true;
 		}
 		else if (!inPathIsSet)
 		{
@@ -482,60 +494,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-
-//
-//Point3d refineVanishingPointWithoutUncalibration(vector<LineSegment> segments)
-//{
-//	Mat A = Mat::zeros(segments.size(), 3, CV_64FC1);
-//	for (int i = 0; i < segments.size(); i++)
-//	{
-//		Point3d originLine(segments[i].line);
-//		originLine /= norm(originLine);
-//		setRow(A, i, Mat(originLine));
-//	}
-//
-//	Mat res;
-//	SVD::solveZ(A, res);
-//	return Point3d(res);
-//}
-//
-//void processImageWithouthCalibration(std::string in, std::string out)
-//{
-//    Mat image = imread(in, 0);
-//	RansacClusterizer clusterizer = initRansacClusterizer(image);
-//
-//	image = imread(in, 1);
-//	vector<Scalar> colors = getColors();
-//	Scalar black(0, 0, 0);
-//	drawFoundSegments(clusterizer.segments, image, black, 1);
-//
-//	vector<Point3d> vps;
-//	for (int i = 0; i < 3; i++)
-//	{
-//		if (clusterizer.notUsed.size() == 0)
-//			break;
-//
-//		Point3d originVp;
-//		vector<LineSegment> found = clusterizer.nextCluster(originVp);
-//		drawFoundSegments(found, image, colors[i] / 2);
-//
-//		Point3d refinedVp = refineVanishingPointWithoutUncalibration(found);
-//		drawFoundSegments(getSegmentsIncidentWithVanishingPoint(refinedVp, clusterizer.segments), image, colors[i]);
-//		vps.push_back(refinedVp);
-//	}
-//
-//	imwrite(out, image);
-//
-//	Mat vpBasis = getRotationMatrixBasedOnVanishingPoints(vps);
-//	Mat orthoVpBasis = getNearestOrthogonalMatrix(vpBasis);
-//	
-//	std::ofstream outfile(out + ".txt");
-//	outfile << vpBasis << endl << orthoVpBasis << endl;
-//	outfile.flush();
-//	outfile.close();
-//
-//	std::cout << vpBasis << endl;
-//	std::cout << orthoVpBasis << endl;
-//
-//	imshow("result", image);
-//}
