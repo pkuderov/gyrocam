@@ -4,22 +4,20 @@
 #include "opencv2/core/core.hpp"
 #include "LineSegment.h"
 
-using namespace cv;
-using namespace std;
-
 namespace gyrocam
 {
-	Point3d toProjective(Vec4i segment, bool first = true);
-	Point3d toProjective(double x, double y);
+	cv::Point3d toProjective(const cv::Vec4i &segment, bool first = true);
 
-	double norm12(Point3d p);
-	bool isIncident(Point3d vp, LineSegment segment);
+	void setRow(cv::Mat &a, int i, const cv::Mat &col);
+	double angleBetween(const cv::Mat &r, const cv::Mat &c);
+	cv::Mat getNearestOrthogonalMatrix(const cv::Mat &a);
+	void findMaxOnRow(const cv::Mat &a, double &m, int &i);
+	void swapColumns(cv::Mat &a, int i, int j);
+	void reorderColumn(cv::Mat &a, int row);
+	void reorderColumn(cv::Mat &a);
 
-	int iterateOnSet(set<int> &base, set<int>::iterator &it, int shift);
-	
-	void setRow(Mat a, int i, Mat col);
-	Mat toNormalized(Mat line, Mat invCalibrationMatrix);
-	Mat toNormalized(LineSegment s, Mat invCalibrationMatrix);
-	Point3d fromNormalized(Mat line, Mat calibrationMatrix);
-	Mat getNearestOrthogonalMatrix(Mat a);
+	cv::Mat getEulerAngles(cv::Mat &r);
+
+	cv::Mat resizeImage(const cv::Mat &image, bool isPocketSize);
+	double findMinAllowedLineSegmentLength(const cv::Mat &image);
 }

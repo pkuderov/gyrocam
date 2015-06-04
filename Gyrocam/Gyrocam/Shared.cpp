@@ -2,117 +2,105 @@
 #include "Geometry.h"
 #include "Config.h"
 
+#include "opencv2/imgproc/imgproc.hpp"
+
 namespace gyrocam
 {
-	Point3d toProjective(Vec4i segment, bool first)
+	cv::Point3d toProjective(const cv::Vec4i &segment, bool first)
 	{
 		return first
 			? toProjective(segment[0], segment[1])
 			: toProjective(segment[2], segment[3]);
 	}
-	Point3d toProjective(double x, double y)
+
+	void setRow(cv::Mat &a, int i, const cv::Mat &col)
 	{
-		return Point3d(x, y, 1);
+		a.row(i) = col.t();
 	}
 	
-	double norm12(Point3d p)
+	double angleBetween(const cv::Mat &r, const cv::Mat &c)
 	{
-		return sqrt(p.x*p.x + p.y*p.y);
-	}
-	
-	bool isIncident(Point3d vp, LineSegment segment)
-	{
-		Point3d l = lineThroughPoints(segment.middle, vp);
-		double d = incidence(l, segment.from) / norm12(l);
-		return abs(d) <= distanceEpsilon 
-			&& abs(asin(d / norm(segment.middle - segment.from))) <= angleEpsilon;
+		cv::Mat x = r * c;
+		double d = x.at<double>(0, 0);
+		return acos(d);
 	}
 
-	void setRow(Mat a, int i, Mat col)
+	cv::Mat getNearestOrthogonalMatrix(const cv::Mat &a)
 	{
-		for (int j = 0; j < col.rows; j++)
-			a.at<double>(i, j) = col.at<double>(j, 0);
-	}
-
-	
-	int iterateOnSet(set<int> &base, set<int>::iterator &it, int shift)
-	{
-		while (shift > 0)
-		{
-			if (it == base.end())
-				it = base.begin();
-
-			shift --;
-			it++;
-		}
-
-		if (it == base.end())
-			it = base.begin();	
-
-		return *it;
-	}
-	
-	
-	Mat toNormalized(Mat line, Mat invCalibrationMatrix)
-	{
-		return invCalibrationMatrix * line;
-	}
-
-	Mat toNormalized(LineSegment s, Mat invCalibrationMatrix)
-	{
-		Mat from(s.from);
-		Mat to(s.to);
-		from = toNormalized(from, invCalibrationMatrix);
-		to = toNormalized(to, invCalibrationMatrix);
-
-		Mat line = to.cross(from);
-		line /= norm(line);
-		return line;
-	}
-
-	Point3d fromNormalized(Mat line, Mat calibrationMatrix)
-	{
-		Mat t = calibrationMatrix * line;
-		return Point3d(t);
-	}
-
-	Mat getNearestOrthogonalMatrix(Mat a)
-	{
-		/*Mat t = a.col(0).cross(a.col(1)).t() * a.col(2);
-		double d = t.at<double>(0, 0);
-		if (abs(d) < 0.4 && d < 0);
-		if (abs(d) > 0.4)
-			return 1
-
-		for (int i = 0; i < 3; i++)
-			for (int j = i + 1; j< 3; j++)
-				if (acos(norm(a.col(j).t() * a.col(i))) > 0.4)
-*/
-		SVD svd(a, SVD::FULL_UV);
+		cv::SVD svd(a, cv::SVD::FULL_UV);
 		return svd.u * svd.vt;
 	}
-
-	// ----------------- OBSOLETE --------------------------
-
-	// Finds the intersection of two lines, or returns false.
-	// The lines are defined by (o1, p1) and (o2, p2).
-	bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2, Point2f &r)
+	
+	void findMaxOnRow(const cv::Mat &a, double &m, int &i)
 	{
-		Point2f x = o2 - o1;
-		Point2f d1 = p1 - o1;
-		Point2f d2 = p2 - o2;
-
-		float cross = d1.x*d2.y - d1.y*d2.x;
-		if (abs(cross) < /*EPS*/1e-8)
-			return false;
-
-		double t1 = (x.x * d2.y - x.y * d2.x)/cross;
-		r = o1 + d1 * t1;
-		return true;
+		m = 0;	i = 0;
+		for (int c = 0; c < 3; c++)
+		{
+			double x = abs(a.at<double>(0, c));
+			if (x > m)
+			{
+				m = x; 
+				i = c;
+			}
+		}
 	}
 
-	double angleBetween(Point2f v1, Point2f v2)
+	void swapColumns(cv::Mat &a, int i, int j)
 	{
-		return v1.ddot(v2) / (norm(v1) * norm(v2));
+		if (i == j)
+			return;
+	
+		cv::Mat t1, t2; 
+		a.col(i).copyTo(t1);
+		a.col(j).copyTo(t2);
+
+		t1.copyTo(a.col(j));
+		t2.copyTo(a.col(i));
+	}
+
+	void reorderColumn(cv::Mat &a, int row)
+	{
+		double m;
+		int i;
+		findMaxOnRow(a.row(row), m, i);
+		swapColumns(a, row, i);
+		if (a.at<double>(row, row) < 0)
+			a.col(row) = -1 * a.col(row);
+	}
+	
+	void reorderColumn(cv::Mat &a)
+	{
+		cv::Mat t = a.col(0).cross(a.col(1)).t() * a.col(2);
+		if (t.at<double>(0, 0) < 0)
+			a.col(2) = -1 * a.col(2);
+	}
+
+	cv::Mat getEulerAngles(cv::Mat &r)
+	{
+		cv::Mat a = cv::Mat::eye(1, 3, CV_64FC1);
+		a.at<double>(0, 0) = atan2(r.at<double>(1,2), r.at<double>(2, 2));
+		a.at<double>(0, 1) = -asin(r.at<double>(0,2));
+		a.at<double>(0, 2) = atan2(r.at<double>(0,1), r.at<double>(0, 0));
+
+		a = a * 180 / CV_PI;
+		return a;
+	}
+
+	cv::Mat resizeImage(const cv::Mat &image, bool isPocketSize)
+	{	
+		cv::Mat resultImage;
+		double width = POCKET_IMAGE_WIDTH * (isPocketSize ? 1 : BIG_IMAGE_SCALE);
+		double height = POCKET_IMAGE_HEIGHT * (isPocketSize ? 1 : BIG_IMAGE_SCALE);
+		double scaleFactor = std::min(width/image.cols, height / image.rows);
+		if (scaleFactor < 1.0)
+			resize(image, resultImage, cv::Size(), scaleFactor, scaleFactor);
+		else
+			resultImage = image;
+		return resultImage;
+	}
+
+	double findMinAllowedLineSegmentLength(const cv::Mat &image)
+	{
+		return std::max(image.cols / POCKET_IMAGE_WIDTH, image.rows / POCKET_IMAGE_HEIGHT) * MIN_ALLOWED_LINE_SEGMENT_LENGTH;
 	}
 }

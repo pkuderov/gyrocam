@@ -77,8 +77,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="ImageProcessor.cpp" />
+    <ClCompile Include="IoProvider.cpp" />
     <ClCompile Include="LineSegment.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RansacClusterizer.cpp" />
@@ -88,10 +89,13 @@
   <ItemGroup>
     <ClInclude Include="Config.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="ImageProcessor.h" />
+    <ClInclude Include="IoProvider.h" />
     <ClInclude Include="LineSegment.h" />
     <ClInclude Include="RansacClusterizer.h" />
     <ClInclude Include="Shared.h" />
     <ClInclude Include="TestTools.h" />
+    <ClInclude Include="TimeCounter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

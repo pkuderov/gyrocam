@@ -1,20 +1,20 @@
 #pragma once
 #include "opencv2/core/core.hpp"
 
-using namespace cv;
-using namespace std;
-
 namespace gyrocam
 {
 	class LineSegment
 	{ 
 	
 	public:
-		Vec4i origin;
-		Point3d from, to, middle, line;
+		cv::Vec4i origin;
+		cv::Point3d from, to, middle, line;
 
-		LineSegment(Vec4i lineSegment);
+		LineSegment(const cv::Vec4i &lineSegment);
+		bool isIncident(const cv::Point3d &vp, double ANGLE_EPSILON) const;
 		~LineSegment(void);
+
+		static std::vector<LineSegment> toLineSegments(const std::vector<cv::Vec4i> &lineSegments, double minLineSegmentLength);
 	};
 
 }

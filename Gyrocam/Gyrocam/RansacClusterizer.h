@@ -4,25 +4,17 @@
 
 #include "LineSegment.h"
 
-using namespace std;
-using namespace cv;
 
 namespace gyrocam
 {
-	static const double ransacNeededProbability = 0.95;
-
-	class RansacClusterizer
+	namespace ransac
 	{
-		bool isNotEnoughIterations(int c, int n, int iteration);
-		Point3d nextPossibleVanishingPoint(int n);
-
-	public:
-		vector<LineSegment> segments;
-		set<int> notUsed;
-
-		RansacClusterizer(vector<LineSegment> segments);
-		vector<LineSegment> nextCluster(Point3d &outVanishingPoint);
-		~RansacClusterizer(void);
-	};
-
+		//int iterateOnSet(const std::set<int> &base, std::set<int>::iterator &it, int shift);
+		int countInducedSegments(const std::vector<LineSegment> &segments, const std::set<int> &notUsed, const cv::Point3d &vp, double angleEpsilon);
+		std::vector<int> getInducedSegments(const std::vector<LineSegment> &segments, const std::set<int> &notUsed, const cv::Point3d &vp, double angleEpsilon);
+		std::vector<LineSegment> resolveIndices(const std::vector<LineSegment> &segments, const std::vector<int> &indices);
+		void markInducedSegmentsAsUsed(std::set<int> &notUsed, const std::vector<int> &toErase);
+	
+		std::vector<LineSegment> nextCluster(const std::vector<LineSegment> &segments, const std::set<int> &notUsed, cv::Point3d &outVanishingPoint);
+	}
 }
