@@ -8,7 +8,7 @@ namespace gyrocam
 
 	static const double MIN_ALLOWED_LINE_SEGMENT_LENGTH = 20;
 	
-	static const double RANSAC_PROBABILITY = 0.98;
+	static const double RANSAC_PROBABILITY = 0.95;
 	static const double DISTANCE_EPSILON = 4;
 	static const double ANGLE_EPSILON = 0.04;
 	static const double REFINED_ANGLE_EPSILON = 0.02;

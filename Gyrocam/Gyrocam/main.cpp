@@ -79,10 +79,7 @@ public:
 			}
 
 			for (int j = 0; j < 3; j++)
-			{
-				angle = angleBetween(gtvpT.row(j), singleRunResult.orthoVpBasis.col(j));
-				vpError.at<double>(i, j) = abs(CV_PI/2 - abs(angle - CV_PI/2));
-			}
+				vpError.at<double>(i, j) = angleBetweenAbs(gtvpT.row(j), singleRunResult.orthoVpBasis.col(j));
 
 			vpErrorMean += vpError.row(i);
 			std::ofstream localCompare(config.getOutputSingleReportPath(basePath));
@@ -124,8 +121,8 @@ public:
 
 void setSingleImageTestSettings()
 {
-	inPath = "../../TestSamples/urban8.jpg";
-	calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
+	inPath = "../../TestSamples/cartesian.png";
+	//calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
 }
 
 void setBatchImageTestSettings()
@@ -190,10 +187,10 @@ int main(int argc, char** argv)
 {
 	// init rand()
 	srand (time(NULL));
-	resolveInputArguments(argc, argv);
 	//setSingleImageTestSettings();
 	//setBatchImageTestSettings();
 	//setYorkUrbanDbTestSettings();
+	resolveInputArguments(argc, argv);
 
 	if (settings.YORK_URBAN_DB_TEST_MODE)
 	{

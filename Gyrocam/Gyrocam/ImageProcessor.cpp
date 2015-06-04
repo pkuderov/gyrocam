@@ -29,8 +29,8 @@ namespace gyrocam
 		timeCounter.StartCounter();
 
 		initColors();
-		loadCalibrationMatrices();
 		loadImage();
+		loadCalibrationMatrices();
 
 		extractLineSegments();
 
@@ -62,6 +62,7 @@ namespace gyrocam
 	{
 		cv::Mat c = vpBasis;
 		cv::Mat r = vpBasis.t();
+		//std::cout << c << std::endl;
 		
 		for (int i = 0; i < 3; i++)
 		{
@@ -69,21 +70,18 @@ namespace gyrocam
 			auto zi = (i+2)%3;
 			double a1 = abs(angleBetween(r.row(i), c.col(yi)) - CV_PI/2);
 			double a2 = abs(angleBetween(r.row(i), c.col(zi)) - CV_PI/2);
-			double dmin = min(a1, a2);
-			double dmax = max(a1, a2);
-			if (dmin > 0.3)
+			if (min(a1, a2) > 0.2)
 			{
-				for (int j = 0; j < 3; j++)
-					vpBasis.at<double>(j, i) = 0;
+				vpBasis.col(i) = 0 * vpBasis.col(i);
+				break;
+			}			
+			if (max(a1, a2) > 1.0)
+			{
+				int col = a1 >= a2 ? yi : zi;
+				vpBasis.col(col) = 0 * vpBasis.col(col);
 				break;
 			}
-			if (dmax > 0.8)
-			{
-				int row = a1 >= a2 ? yi : zi;
-				for (int j = 0; j < 3; j++)
-					vpBasis.at<double>(j, row) = 0;
-				break;
-			}
+			
 		}
 	}
 	cv::Point3d ImageProcessor::smartVpRefinement(const std::vector<LineSegment> &originCluster, int i)
@@ -95,7 +93,9 @@ namespace gyrocam
 		do
 		{
 			normalizedVp = refineVanishingPoint(cluster);
-			vp = fromNormalized(cv::Mat(normalizedVp));
+			cv::Point3d t(normalizedVp);
+			normalizeZ(t);
+			vp = fromNormalized(cv::Mat(t));
 			normalizeZ(vp);
 		
 			indices = ransac::getInducedSegments(segments, notUsedSegments, vp, ANGLE_EPSILON / (4 - steps));
@@ -139,6 +139,8 @@ namespace gyrocam
 		for (int i = 0; i < cluster.size(); i++)
 			setRow(A, i, toNormalized(cluster[i]));
 
+		//std::cout << A << std::endl;
+
 		cv::Mat res = cv::Mat::zeros(3, 1, CV_64FC1);
 		solveZ(A, res);
 		res = res.t();
@@ -167,7 +169,7 @@ namespace gyrocam
 			std::cout << "Vt: " << svd.vt << std::endl;
 		}
 
-		double maxSigma = svd.w.rows > 0 ? svd.w.at<double>(0, 0) : 1;
+		/*double maxSigma = svd.w.rows > 0 ? svd.w.at<double>(0, 0) : 1;
 		for (int i = 0; i < svd.w.rows; i++)
 		{
 			double d = svd.w.at<double>(i, 0);
@@ -176,9 +178,9 @@ namespace gyrocam
 				res = svd.vt.row(i == 0 ? i : i - 1);
 				return;
 			}
-		}
+		}*/
 
-		res = svd.vt.row(svd.vt.cols - 1);
+		res = svd.vt.row(svd.w.rows - 1);
 	}
 
 	void ImageProcessor::initColors()
@@ -191,7 +193,14 @@ namespace gyrocam
 		if (calibrationMatrix.rows > 0)
 			return;
 
-		calibrationMatrix = readCalibrationMatrix(config.getCalibrationMatrixPath());
+		auto path = config.getCalibrationMatrixPath();
+		calibrationMatrix = readCalibrationMatrix(path);
+
+		if (path.empty())
+		{
+			calibrationMatrix.at<double>(0, 2) = image.cols / 2;
+			calibrationMatrix.at<double>(1, 2) = image.rows / 2;
+		}
 		inversedCalibrationMatrix = calibrationMatrix.inv();
 	}
 
@@ -229,7 +238,7 @@ namespace gyrocam
 	
 	cv::Mat ImageProcessor::getRotationMatrix(const std::vector<cv::Point3d> &vps)
 	{
-		cv::Mat A = cv::Mat::eye(3, 3, CV_64FC1);
+		cv::Mat A = cv::Mat::zeros(3, 3, CV_64FC1);
 		for (int i = 0; i < vps.size(); i++)
 		{
 			double d = norm(vps[i]);
@@ -264,18 +273,20 @@ namespace gyrocam
 		saveMatrix(config.getOutputNonOrthogonalVpsPath(), result.vpBasis);
 		saveMatrix(config.getOutputOrthogonalVpsPath(), result.orthoVpBasis);
 		saveMatrix(config.getOutputAnglesPath(), result.eulerAngles);
-
+		
 		if (settings.TRACE_ENABLED)
 		{
 			std::cout << result.vpBasis << std::endl;
-			std::cout << result.orthoVpBasis << std::endl;
 			std::cout << result.eulerAngles << std::endl;
 		}
-
+		if (settings.TRACE_ENABLED || settings.SHOW_IMAGE)
+		{
+			std::cout << result.orthoVpBasis << std::endl;
+		}
 		if (settings.BUILD_IMAGE)
 		{
 			drawEulerAngles(image, result.eulerAngles);
-			//drawAxes(image, 20 * calibrationMatrix * result.orthoVpBasis);
+			//drawAxes(image, 20 * calibrationMatrix * result.orthoVpBasis.t());
 		}
 	}
 	
@@ -288,11 +299,15 @@ namespace gyrocam
 	{
 		cv::Mat from(s.from);
 		cv::Mat to(s.to);
+		//std::cout << from << std::endl << to << std::endl;
 		from = toNormalized(from);
 		to = toNormalized(to);
+		//std::cout << from << std::endl << to << std::endl;
 
-		cv::Mat line = to.cross(from);
-		line /= norm(line);
+		cv::Mat line = from.cross(to);
+		if (norm(line) > 1e-12)
+			line /= norm(line);
+		//std::cout << line << std::endl;
 		return line;
 	}
 	cv::Point3d ImageProcessor::fromNormalized(const cv::Mat &line)

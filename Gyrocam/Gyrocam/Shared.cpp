@@ -24,6 +24,10 @@ namespace gyrocam
 		double d = x.at<double>(0, 0);
 		return acos(d);
 	}
+	double angleBetweenAbs(const cv::Mat &r, const cv::Mat &c)
+	{
+		return abs(CV_PI/2 - abs(angleBetween(r, c) - CV_PI/2));
+	}
 
 	cv::Mat getNearestOrthogonalMatrix(const cv::Mat &a)
 	{
@@ -75,7 +79,7 @@ namespace gyrocam
 			a.col(2) = -1 * a.col(2);
 	}
 
-	cv::Mat getEulerAngles(cv::Mat &r)
+	cv::Mat getEulerAngles(const cv::Mat &r)
 	{
 		cv::Mat a = cv::Mat::eye(1, 3, CV_64FC1);
 		a.at<double>(0, 0) = atan2(r.at<double>(1,2), r.at<double>(2, 2));
