@@ -51,7 +51,7 @@ namespace gyrocam
 		reorderColumn(result.orthoVpBasis, 0);
 		reorderColumn(result.orthoVpBasis);		
 		
-		result.eulerAngles = getEulerAngles(result.orthoVpBasis);
+		result.eulerAngles = getEulerAngles(result.orthoVpBasis.t());
 		result.runTime = timeCounter.GetCounter();
 		saveResults(result);
 		drawProcessedImage(getEulerAnglesString(result.eulerAngles));

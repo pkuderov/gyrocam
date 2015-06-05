@@ -66,7 +66,8 @@ namespace gyrocam
 	void drawEulerAngles(cv::Mat &image, const cv::Mat &ea)
 	{
 		std::string s = getEulerAnglesString(ea);		
-		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar::all(255), 2);
+		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar::all(0), 1);
 	}
 	void drawAxes(cv::Mat &image, const cv::Mat &vps)
 	{
