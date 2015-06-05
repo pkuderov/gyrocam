@@ -5,17 +5,7 @@
 #include "opencv2/imgproc/imgproc.hpp"
 
 namespace gyrocam
-{
-	void testOut(cv::Vec4i s)
-	{
-		std::cout << "[(" << s[0] << ", " << s[1] << "), (" << s[2] << ", " << s[3] << ")]";
-	}
-
-	void testOut(cv::Point3d p)
-	{
-		std::cout << p;
-	}
-	
+{	
 	std::vector<cv::Scalar> getColors()
 	{
 		std::vector<cv::Scalar> colors;

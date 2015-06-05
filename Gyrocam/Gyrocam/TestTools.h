@@ -6,9 +6,6 @@
 
 namespace gyrocam
 {
-	void testOut(cv::Vec4i s);
-	void testOut(cv::Point3d p);
-
 	std::vector<cv::Scalar> getColors();
 	void drawFoundSegments(const std::vector<LineSegment> &segments, const cv::Mat &image, const cv::Scalar &color, int thickness = 2);
 	void drawPointMarkerIfVisibleOnImage(const cv::Point3d &p, const cv::Mat &image, const cv::Scalar &color);
