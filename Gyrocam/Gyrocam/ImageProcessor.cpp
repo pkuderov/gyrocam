@@ -305,8 +305,8 @@ namespace gyrocam
 		//std::cout << from << std::endl << to << std::endl;
 
 		cv::Mat line = from.cross(to);
-		if (norm(line) > 1e-12)
-			line /= norm(line);
+		/*if (norm(line) > 1e-12)
+			line /= norm(line);*/
 		//std::cout << line << std::endl;
 		return line;
 	}

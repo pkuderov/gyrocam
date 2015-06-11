@@ -121,7 +121,7 @@ public:
 
 void setSingleImageTestSettings()
 {
-	inPath = "../../TestSamples/cartesian.png";
+	inPath = "../../TestSamples/urban3.jpg";
 	//calibrationMatrixPath = "../../TestSamples/YorkUrbanDB/cameraParameters.txt";
 }
 

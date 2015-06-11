@@ -17,7 +17,8 @@ namespace gyrocam
 	bool LineSegment::isIncident(const cv::Point3d &vp, double ANGLE_EPSILON) const
 	{
 		cv::Point3d l = lineThroughPoints(middle, vp);
-		double d = incidence(l, from) / (norm12(l) * norm(middle - from));
+		normalizeZ(l);
+		double d = incidence(l, from) / (norm12(l) * norm12(middle - from));
 		return abs(asin(d)) <= ANGLE_EPSILON;
 	}
 
