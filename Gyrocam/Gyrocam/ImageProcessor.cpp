@@ -220,6 +220,8 @@ namespace gyrocam
 		std::vector<cv::Vec4i> lines_std;
 		cv::Ptr<cv::LineSegmentDetector> ls = cv::createLineSegmentDetector(cv::LSD_REFINE_STD);
 		ls->detect(grayImage, lines_std);
+
+		/*ls->drawSegments(image, lines_std);*/
 		
 		segments = LineSegment::toLineSegments(lines_std, findMinAllowedLineSegmentLength(image));
 		notUsedSegments.clear();

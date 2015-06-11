@@ -6,7 +6,7 @@ namespace gyrocam
 	static const double POCKET_IMAGE_HEIGHT = 480;
 	static const double BIG_IMAGE_SCALE = 1.5;
 
-	static const double MIN_ALLOWED_LINE_SEGMENT_LENGTH = 20;
+	static const double MIN_ALLOWED_LINE_SEGMENT_LENGTH = 16;
 	
 	static const double RANSAC_PROBABILITY = 0.95;
 	static const double DISTANCE_EPSILON = 4;
