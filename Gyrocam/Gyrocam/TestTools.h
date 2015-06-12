@@ -57,10 +57,5 @@ namespace gyrocam
 		cv::Mat vpBasis, orthoVpBasis, eulerAngles;
 		double runTime;
 	};
-
-	class BatchRunResult
-	{
-
-	};
 }
 

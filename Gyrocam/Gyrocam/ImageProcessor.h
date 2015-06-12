@@ -18,7 +18,7 @@ namespace gyrocam
 		std::vector<cv::Scalar> colors;
 
 		void initColors();
-		void loadCalibrationMatrices();
+		void loadCalibrationMatrix();
 		void loadImage();
 		void extractLineSegments();
 		void findVanishingPoint();

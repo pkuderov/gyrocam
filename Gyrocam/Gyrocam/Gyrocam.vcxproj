@@ -85,6 +85,7 @@
     <ClCompile Include="RansacClusterizer.cpp" />
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="TestTools.cpp" />
+    <ClCompile Include="YorkUrbanDbTester.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h" />
@@ -96,6 +97,7 @@
     <ClInclude Include="Shared.h" />
     <ClInclude Include="TestTools.h" />
     <ClInclude Include="TimeCounter.h" />
+    <ClInclude Include="YorkUrbanDbTester.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

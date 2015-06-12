@@ -105,6 +105,8 @@ namespace gyrocam
 
 	double findMinAllowedLineSegmentLength(const cv::Mat &image)
 	{
-		return std::max(image.cols / POCKET_IMAGE_WIDTH, image.rows / POCKET_IMAGE_HEIGHT) * MIN_ALLOWED_LINE_SEGMENT_LENGTH;
+		double wScale = image.cols / POCKET_IMAGE_WIDTH;
+		double hScale = image.rows / POCKET_IMAGE_HEIGHT;
+		return std::max(wScale, hScale) * MIN_ALLOWED_LINE_SEGMENT_LENGTH;
 	}
 }

@@ -13,7 +13,6 @@ namespace gyrocam
 	static const double ANGLE_EPSILON = 0.04;
 	static const double REFINED_ANGLE_EPSILON = 0.02;
 
-	//static const double pi = 3.14159265358979323846;
 	static const double INFINITE_POINT_Z_EPSILON = 1e-12;
 
 	class Settings

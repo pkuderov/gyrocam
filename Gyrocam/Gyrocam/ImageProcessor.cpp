@@ -30,7 +30,7 @@ namespace gyrocam
 
 		initColors();
 		loadImage();
-		loadCalibrationMatrices();
+		loadCalibrationMatrix();
 
 		extractLineSegments();
 
@@ -46,6 +46,7 @@ namespace gyrocam
 
 		result.vpBasis = getRotationMatrix(vps);
 		refineVpBasis(result.vpBasis);
+
 		result.orthoVpBasis = getNearestOrthogonalMatrix(result.vpBasis);
 		reorderColumn(result.orthoVpBasis, 1);
 		reorderColumn(result.orthoVpBasis, 0);
@@ -188,7 +189,7 @@ namespace gyrocam
 		if (colors.empty())
 			colors = getColors();
 	}
-	void ImageProcessor::loadCalibrationMatrices()
+	void ImageProcessor::loadCalibrationMatrix()
 	{
 		if (calibrationMatrix.rows > 0)
 			return;
@@ -220,22 +221,16 @@ namespace gyrocam
 		std::vector<cv::Vec4i> lines_std;
 		cv::Ptr<cv::LineSegmentDetector> ls = cv::createLineSegmentDetector(cv::LSD_REFINE_STD);
 		ls->detect(grayImage, lines_std);
-
-		/*ls->drawSegments(image, lines_std);*/
-		
+				
 		segments = LineSegment::toLineSegments(lines_std, findMinAllowedLineSegmentLength(image));
 		notUsedSegments.clear();
 		for (int i = 0; i < segments.size(); i++)
 			notUsedSegments.insert(i);
 		
 		if (settings.BUILD_IMAGE && settings.DRAW_RAW_SEGMENTS)
-		{
 			drawFoundSegments(segments, image, colors[0], 1);
-		}
 		if (settings.TRACE_ENABLED)
-		{
 			std::cout << "Raw segments: " << lines_std.size() << "; passed length filter: " << segments.size() << std::endl;
-		}
 	}
 	
 	cv::Mat ImageProcessor::getRotationMatrix(const std::vector<cv::Point3d> &vps)
