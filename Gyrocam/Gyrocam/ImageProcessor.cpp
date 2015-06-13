@@ -63,7 +63,6 @@ namespace gyrocam
 	{
 		cv::Mat c = vpBasis;
 		cv::Mat r = vpBasis.t();
-		//std::cout << c << std::endl;
 		
 		for (int i = 0; i < 3; i++)
 		{
@@ -82,7 +81,6 @@ namespace gyrocam
 				vpBasis.col(col) = 0 * vpBasis.col(col);
 				break;
 			}
-			
 		}
 	}
 	cv::Point3d ImageProcessor::smartVpRefinement(const std::vector<LineSegment> &originCluster, int i)
@@ -95,7 +93,6 @@ namespace gyrocam
 		{
 			normalizedVp = refineVanishingPoint(cluster);
 			cv::Point3d t(normalizedVp);
-			normalizeZ(t);
 			vp = fromNormalized(cv::Mat(t));
 			normalizeZ(vp);
 		
@@ -162,7 +159,6 @@ namespace gyrocam
 	void ImageProcessor::solveZ(const cv::Mat &a, cv::Mat &res)
 	{
 		cv::SVD svd(a, cv::SVD::FULL_UV);
-
 		if (settings.TRACE_ENABLED)
 		{
 			std::cout << "SVD results:" << std::endl;

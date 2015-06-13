@@ -52,10 +52,9 @@ namespace gyrocam
 			reorderColumn(groundTruthVpOrthoBasis, 0);
 			reorderColumn(groundTruthVpOrthoBasis);
 			
-			cv::Mat gtvpT = groundTruthVpOrthoBasis.t();
-			
-			double angle = angleBetween(gtvpT.row(0), singleRunResult.orthoVpBasis.col(0));
-			if (abs(CV_PI/2 - abs(angle - CV_PI/2)) > 1.2)
+			cv::Mat gtvpT = groundTruthVpOrthoBasis.t();			
+			bool needSwap = angleBetweenAbs(gtvpT.row(0), singleRunResult.orthoVpBasis.col(0)) < angleBetweenAbs(gtvpT.row(2), singleRunResult.orthoVpBasis.col(0));
+			if (needSwap)
 			{
 				swapColumns(groundTruthVpOrthoBasis, 0, 2);
 				gtvpT = groundTruthVpOrthoBasis.t();
