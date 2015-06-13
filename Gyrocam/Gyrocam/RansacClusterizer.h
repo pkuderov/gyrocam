@@ -9,7 +9,6 @@ namespace gyrocam
 {
 	namespace ransac
 	{
-		//int iterateOnSet(const std::set<int> &base, std::set<int>::iterator &it, int shift);
 		int countInducedSegments(const std::vector<LineSegment> &segments, const std::set<int> &notUsed, const cv::Point3d &vp, double angleEpsilon);
 		std::vector<int> getInducedSegments(const std::vector<LineSegment> &segments, const std::set<int> &notUsed, const cv::Point3d &vp, double angleEpsilon);
 		std::vector<LineSegment> resolveIndices(const std::vector<LineSegment> &segments, const std::vector<int> &indices);
