@@ -50,7 +50,21 @@ namespace gyrocam
 		result.orthoVpBasis = getNearestOrthogonalMatrix(result.vpBasis);
 		reorderColumn(result.orthoVpBasis, 1);
 		reorderColumn(result.orthoVpBasis, 0);
-		reorderColumn(result.orthoVpBasis);		
+		reorderColumn(result.orthoVpBasis);
+
+		if (settings.BUILD_IMAGE)
+		{
+			notUsedSegments.clear();
+			for (int i = 0; i < segments.size(); i++)
+				notUsedSegments.insert(i);
+			for (int i = 0; i < 3; i++)
+			{
+				auto vp = fromNormalized(result.orthoVpBasis.col(i));
+				normalizeZ(vp);
+				auto cluster = ransac::resolveIndices(segments, ransac::getInducedSegments(segments, notUsedSegments, vp, ANGLE_EPSILON / 2));
+				drawInducedCluster(vp, cluster, colors[i + 1], settings.BUILD_IMAGE);
+			}
+		}
 		
 		result.eulerAngles = getEulerAngles(result.orthoVpBasis.t());
 		result.runTime = timeCounter.GetCounter();
@@ -104,7 +118,7 @@ namespace gyrocam
 		while (steps > 0 && cluster.size() > 3);
 			
 		ransac::markInducedSegmentsAsUsed(notUsedSegments, indices);
-		drawInducedCluster(vp, cluster, colors[i], settings.BUILD_IMAGE);
+		//drawInducedCluster(vp, cluster, colors[i], settings.BUILD_IMAGE);
 
 		return normalizedVp;
 	}

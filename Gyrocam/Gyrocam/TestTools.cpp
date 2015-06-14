@@ -29,7 +29,7 @@ namespace gyrocam
 		for (int i = 0; i < segments.size(); i++)
 		{
 			cv::Vec4i origin = segments[i].origin;
-			line(image, cv::Point(origin[0], origin[1]), cv::Point(origin[2], origin[3]), color, thickness);
+			line(image, cv::Point(origin[0], origin[1]), cv::Point(origin[2], origin[3]), color, thickness, cv::LINE_AA);
 		}
 	}
 	void drawPointMarkerIfVisibleOnImage(const cv::Point3d &p, const cv::Mat &image, const cv::Scalar &color)
@@ -41,9 +41,9 @@ namespace gyrocam
 		double r = 10;
 		double d = r*sq2/2;
 
-		circle(image, cv::Point2d(p.x, p.y), r, color, 2);
-		line(image, cv::Point2d(p.x-d, p.y+d), cv::Point2d(p.x+d, p.y-d), color, 2);
-		line(image, cv::Point2d(p.x-d, p.y-d), cv::Point2d(p.x+d, p.y+d), color, 2);
+		circle(image, cv::Point2d(p.x, p.y), r, color, 2, cv::LINE_AA);
+		line(image, cv::Point2d(p.x-d, p.y+d), cv::Point2d(p.x+d, p.y-d), color, 2, cv::LINE_AA);
+		line(image, cv::Point2d(p.x-d, p.y-d), cv::Point2d(p.x+d, p.y+d), color, 2, cv::LINE_AA);
 	}
 	std::string getEulerAnglesString(const cv::Mat &ea)
 	{
@@ -56,8 +56,8 @@ namespace gyrocam
 	void drawEulerAngles(cv::Mat &image, const cv::Mat &ea)
 	{
 		std::string s = getEulerAnglesString(ea);		
-		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar::all(255), 2);
-		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar::all(0), 1);
+		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar::all(255), 2, cv::LINE_AA);
+		putText(image, s, cv::Point(20, 20), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar::all(0), 1, cv::LINE_AA);
 	}
 	void drawAxes(cv::Mat &image, const cv::Mat &vps)
 	{
@@ -71,7 +71,7 @@ namespace gyrocam
 			normalizeZ(p);
 			cv::Point2d _p(p.x, p.y);
 
-			cv::line(image, o, o + _p, cv::Scalar::all(255), 1);
+			cv::line(image, o, o + _p, cv::Scalar::all(255), 1, cv::LINE_AA);
 		}
 	}
 

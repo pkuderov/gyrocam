@@ -10,6 +10,6 @@ namespace gyrocam
 
 	public:
 		YorkUrbanDbTester(const YorkUrbanDbTestRunConfig &config, const Settings &settings);
-		void run();
+		void run(int k);
 	};
 }

@@ -19,6 +19,7 @@ using namespace gyrocam;
 
 std::string inPath, calibrationMatrixPath;
 Settings settings;
+int TEST_ITERATIONS = 1;
 
 void setSingleImageTestSettings()
 {
@@ -79,8 +80,10 @@ void resolveInputArguments(int argc, char** argv)
 		}
 		else if (inPath.empty())
 			inPath = s;
-		else
+		else if (calibrationMatrixPath.empty())
 			calibrationMatrixPath = s;
+		else
+			sscanf(s.c_str(), "%d", &TEST_ITERATIONS);
 	}
 }
 
@@ -98,7 +101,7 @@ int main(int argc, char** argv)
 		// db test
 		YorkUrbanDbTestRunConfig config(inPath);
 		YorkUrbanDbTester tester(config, settings);
-		tester.run();
+		tester.run(TEST_ITERATIONS);
 	}
 	//else if (getExtension(inPath) == ".txt")		
 	//{

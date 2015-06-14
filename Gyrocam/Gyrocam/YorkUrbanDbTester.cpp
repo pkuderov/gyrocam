@@ -15,7 +15,7 @@ namespace gyrocam
 	}
 
 	
-	void YorkUrbanDbTester::run()
+	void YorkUrbanDbTester::run(int k)
 	{
 		std::vector<std::string> imageNames = extractListFromFile(config.getImageNamesListPath());
 		int n = imageNames.size();
@@ -41,61 +41,71 @@ namespace gyrocam
 			
 			SingleRunConfig singleRunConfig(config.getSingleRunImagePath(basePath), config.getCalibrationMatrixPath());
 			imageProcessor.loadConfig(singleRunConfig);
-			SingleRunResult singleRunResult = imageProcessor.process();
-			elapsedTime += singleRunResult.runTime;
-
+			
 			cv::Mat groundTruthVpOrthoBasis = readVpBasis(config.getSingleRunOrthogonalGroundTruthPath(basePath));
-		
 			//cout << singleRunResult.orthoVpBasis << std::endl;
 			groundTruthVpOrthoBasis.row(1) = -1 * groundTruthVpOrthoBasis.row(1);
 			reorderColumn(groundTruthVpOrthoBasis, 1);
 			reorderColumn(groundTruthVpOrthoBasis, 0);
 			reorderColumn(groundTruthVpOrthoBasis);
-			
-			cv::Mat gtvpT = groundTruthVpOrthoBasis.t();			
-			bool needSwap = angleBetweenAbs(gtvpT.row(0), singleRunResult.orthoVpBasis.col(0)) < angleBetweenAbs(gtvpT.row(2), singleRunResult.orthoVpBasis.col(0));
-			if (needSwap)
+
+			cv::Mat localVpError = cv::Mat::zeros(k, 3, CV_64FC1), localVpErrorMean = cv::Mat::zeros(1, 3, CV_64FC1), localVpErrorStd = cv::Mat::zeros(1, 3, CV_64FC1);
+			for (int ii = 0; ii < k; ii++)
 			{
-				swapColumns(groundTruthVpOrthoBasis, 0, 2);
-				gtvpT = groundTruthVpOrthoBasis.t();
+				SingleRunResult singleRunResult = imageProcessor.process();
+				elapsedTime += singleRunResult.runTime;
+				
+				cv::Mat gtvpT = groundTruthVpOrthoBasis.t();			
+				bool needSwap = angleBetweenAbs(gtvpT.row(0), singleRunResult.orthoVpBasis.col(0)) > angleBetweenAbs(gtvpT.row(2), singleRunResult.orthoVpBasis.col(0));
+				if (needSwap)
+				{
+					swapColumns(groundTruthVpOrthoBasis, 0, 2);
+					gtvpT = groundTruthVpOrthoBasis.t();
+				}
+				
+				for (int j = 0; j < 3; j++)
+					localVpError.at<double>(ii, j) = angleBetweenAbs(gtvpT.row(j), singleRunResult.orthoVpBasis.col(j));
+				
+				localVpErrorMean += localVpError.row(ii);
 			}
+			localVpErrorMean /= k;
+			vpError.row(i) += localVpErrorMean;
+			vpErrorMean += localVpErrorMean;
 
-			for (int j = 0; j < 3; j++)
-				vpError.at<double>(i, j) = angleBetweenAbs(gtvpT.row(j), singleRunResult.orthoVpBasis.col(j));
-
-			vpErrorMean += vpError.row(i);
+			if (k > 1)
+			{
+				for (int ii = 0; ii < k; ii++)
+				{
+					cv::Mat t = localVpError.row(ii) - localVpErrorMean;
+					for (int j = 0; j < 3; j++)
+					{
+						double tt = t.at<double>(0, j);
+						localVpErrorStd.at<double>(0, j) += tt * tt;
+					}
+				}
+				for (int j = 0; j < 3; j++)
+					localVpErrorStd.at<double>(0, j) = sqrt(localVpErrorStd.at<double>(0, j))/(k - 1);
+				vpErrorStd += localVpErrorStd;
+			}
+			
 			std::ofstream localCompare(config.getOutputSingleReportPath(basePath));
 			localCompare << vpError.row(i) << std::endl;
 			localCompare.flush();
 			localCompare.close();
 
 			globalReport << imageNames[i] << ": " << vpError.row(i) << std::endl;
-
 			std::cout << i << std::endl;
 		}
 
 		vpErrorMean /= n;
 		globalReport << "err mean = " << vpErrorMean << std::endl;
 
-		if (n < 2)
-			return;
-
-		for (int i = 0; i < n; i++)
-		{
-			cv::Mat t = vpError.row(i) - vpErrorMean;
-			for (int j = 0; j < 3; j++)
-			{
-				double tt = t.at<double>(0, j);
-				vpErrorStd.at<double>(0, j) += tt * tt;
-			}
-		}	
-		for (int i = 0; i < 3; i++)
-			vpErrorStd.at<double>(0, i) = sqrt(vpErrorStd.at<double>(0, i))/(n - 1);
-
+		vpErrorStd /= n;
 		globalReport << "err std = " << vpErrorStd << std::endl;
 		globalReport.flush();
 		globalReport.close();
 
+		elapsedTime /= k;
 		elapsedTime /= 1000;
 		std::cout << "elapsed = " << elapsedTime << "; fps = " << n / elapsedTime << std::endl;
 	}
